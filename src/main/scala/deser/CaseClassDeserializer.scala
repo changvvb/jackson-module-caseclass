@@ -1,4 +1,4 @@
-package io.growing.provider
+package deser
 
 import com.fasterxml.jackson.core.{JsonParser, JsonProcessingException}
 import com.fasterxml.jackson.databind.{DeserializationContext, JavaType, ObjectMapper}
@@ -40,13 +40,13 @@ class CaseClassDeserializer[T: Manifest]() extends StdDeserializer[T](manifest[T
     val params = fieldsWithIndex.map {
       case (field, index) ⇒
         val fieldName = field.name.toString.trim
-        if (node.hasNonNull(fieldName)) { // 在 json 里存在该字段
+        if (node.hasNonNull(fieldName)) {
           val javaType = mapper.constructType(field.typeSignature)
           val subJsonParser = mapper.treeAsTokens(node.get(fieldName))
           mapper.readValue(subJsonParser, javaType).asInstanceOf[AnyRef]
-        } else { // 在 json 里不存在该字段
-          val methodName = "$lessinit$greater$default$" + (index + 1) // 获取拿到 case class 默认值的方法的 methodName
-          methods.find(_.getName == methodName).fold(zeroValue(field.typeSignature))(_.invoke(null)) // 没有默认值时用零值替代
+        } else {
+          val methodName = "$lessinit$greater$default$" + (index + 1)
+          methods.find(_.getName == methodName).fold(zeroValue(field.typeSignature))(_.invoke(null))
         }
     }
 

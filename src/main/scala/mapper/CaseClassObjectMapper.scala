@@ -2,7 +2,7 @@ package mapper
 
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.{JavaType, ObjectMapper}
-import io.growing.provider.CaseClassDeserializer
+import deser.CaseClassDeserializer
 
 import scala.reflect.runtime.universe._
 
