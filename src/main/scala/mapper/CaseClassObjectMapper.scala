@@ -1,12 +1,14 @@
 package mapper
 
+import annotation.CaseClassDeserialize
 import com.fasterxml.jackson.databind.module.SimpleModule
-import com.fasterxml.jackson.databind.{JavaType, ObjectMapper}
+import com.fasterxml.jackson.databind.{DeserializationContext, JavaType, JsonDeserializer, ObjectMapper}
 import deser.CaseClassDeserializer
 
+import scala.collection.mutable
 import scala.reflect.runtime.universe._
 
-trait CaseClassObjectMapper {
+trait CaseClassObjectMapper extends ObjectMapper {
   self: ObjectMapper ⇒
   def constructType(tpe: Type): JavaType = {
     def checkArgumentLength(argumentsLength: Int, shouldBeLength: Int) = {
@@ -43,4 +45,22 @@ trait CaseClassObjectMapper {
     module.addDeserializer(manifest[T].runtimeClass.asInstanceOf[Class[T]],new CaseClassDeserializer[T])
     this.registerModule(module)
   }
+
+  override def _findRootDeserializer(ctxt: DeserializationContext, valueType: JavaType): JsonDeserializer[AnyRef] = {
+    if (useCaseClassDeserializer(valueType)) {
+      _caseClassDeserializers.getOrElseUpdate(valueType,  {
+        CaseClassDeserializer.apply(valueType.getRawClass)
+      })
+    } else {
+      super._findRootDeserializer(ctxt,valueType)
+    }
+  }
+
+  private def useCaseClassDeserializer(valueType:JavaType) = {
+    valueType.getRawClass.getAnnotation(classOf[CaseClassDeserialize]) != null
+  }
+
+  private val _caseClassDeserializers = mutable.Map[JavaType,JsonDeserializer[AnyRef]]()
+
+
 }
