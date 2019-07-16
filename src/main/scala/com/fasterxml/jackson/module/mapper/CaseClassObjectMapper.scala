@@ -1,9 +1,9 @@
-package mapper
+package com.fasterxml.jackson.module.mapper
 
-import annotation.CaseClassDeserialize
+import com.fasterxml.jackson.module.annotation.CaseClassDeserialize
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.{DeserializationContext, JavaType, JsonDeserializer, ObjectMapper}
-import deser.CaseClassDeserializer
+import com.fasterxml.jackson.module.deser.CaseClassDeserializer
 
 import scala.collection.mutable
 import scala.reflect.runtime.universe._

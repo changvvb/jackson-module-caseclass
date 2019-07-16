@@ -1,4 +1,4 @@
-package deser
+package com.fasterxml.jackson.module.deser
 
 import com.fasterxml.jackson.core.{JsonParser, JsonProcessingException}
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.{BeanDescription, BeanProperty, Deserializ
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.ObjectNode
-import mapper.CaseClassObjectMapper
+import com.fasterxml.jackson.module.mapper.CaseClassObjectMapper
 
 import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
