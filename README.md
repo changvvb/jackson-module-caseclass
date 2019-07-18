@@ -1,16 +1,32 @@
 # jackson-module-caseclass
 
-### Usage
+## Dependency
 
-#### 1. use @CaseClassDeserialize
+### sbt
+```scala
+libraryDependencies += "com.github.changvvb" % "jackson-module-caseclass_2.12" % "0.0.1"
+```
+
+### maven
+```xml
+<dependency>
+    <groupId>com.github.changvvb</groupId>
+    <artifactId>jackson-module-caseclass_2.12</artifactId>
+    <version>0.0.1</version>
+</dependency>
+```
+
+## Usage
+
+### 1. use @CaseClassDeserialize
 
 ```scala
-import com.fasterxml.jackson.module.annotation.CaseClassDeserialize
+import com.fasterxml.jackson.module.caseclass.annotation.CaseClassDeserialize
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.fasterxml.jackson.module.mapper.CaseClassObjectMapper
+import com.fasterxml.jackson.module.caseclass.mapper.CaseClassObjectMapper
 
 @CaseClassDeserialize()
 case class TestCaseClass(
@@ -34,14 +50,14 @@ val json =
 mapper.readValue[TestCaseClass](json)
 ```
 
-#### 2. use @JsonDeserialize
+### 2. use @JsonDeserialize
 ```scala
-import com.fasterxml.jackson.module.deser.CaseClassDeserializer
+import com.fasterxml.jackson.module.caseclass.deser.CaseClassDeserializer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.fasterxml.jackson.module.mapper.CaseClassObjectMapper
+import com.fasterxml.jackson.module.caseclass.mapper.CaseClassObjectMapper
 
 class MyDeserializer extends CaseClassDeserializer[TestCaseClass]
 
@@ -67,13 +83,13 @@ val json =
 mapper.readValue[TestCaseClass](json)
 ```
 
-#### 3. use registerCaseClassDeserializer()
+### 3. use registerCaseClassDeserializer()
 ```scala
-import com.fasterxml.jackson.module.deser.CaseClassDeserializer
+import com.fasterxml.jackson.module.caseclass.deser.CaseClassDeserializer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.fasterxml.jackson.module.mapper.CaseClassObjectMapper
+import com.fasterxml.jackson.module.caseclass.mapper.CaseClassObjectMapper
 
 case class TestCaseClass(
   intValue:Int,
