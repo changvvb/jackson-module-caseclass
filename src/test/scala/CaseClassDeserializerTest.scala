@@ -1,9 +1,9 @@
-import com.fasterxml.jackson.module.annotation.CaseClassDeserialize
+import com.fasterxml.jackson.module.caseclass.annotation.CaseClassDeserialize
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.fasterxml.jackson.module.mapper.CaseClassObjectMapper
+import com.fasterxml.jackson.module.caseclass.mapper.CaseClassObjectMapper
 import org.scalatest.FunSuite
 
 case class CaseClassField(@JsonDeserialize(using = classOf[TestDeserializer]) intValue:Int)

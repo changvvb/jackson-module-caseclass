@@ -1,4 +1,4 @@
-package com.fasterxml.jackson.module.annotation;
+package com.fasterxml.jackson.module.caseclass.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
