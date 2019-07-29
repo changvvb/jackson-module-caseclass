@@ -1,5 +1,19 @@
 # jackson-module-caseclass
 
+## Features
+- If one field present in json, just deserialize it.
+- If one field not present in json, but the case class has default value, deserialize it as the case class default value.
+- If one field not present in json, and the case class doesn't has default value, deserialize it as a zero value.
+- Use scala reflect instead of java reflect to constract JavaType, so that jackson-module-caseclass can extract type parameter correctly https://github.com/FasterXML/jackson-module-scala/issues/62.
+
+### Zero value
+For some scala type, if jackson-module-caseclass doesn't know what a field value should be set, it will be deserialized as a zero value so that we can avoid NullPointerException at most case.
+- Number(Int, Long, Char ...): 0
+- Boolean: false
+- Option: None
+- collection.Map: Map.empty
+- Iterable: Nil
+
 ## Dependency
 
 ### sbt
