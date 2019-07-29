@@ -4,16 +4,7 @@
 
 ### sbt
 ```scala
-libraryDependencies += "com.github.changvvb" % "jackson-module-caseclass_2.12" % "0.0.1"
-```
-
-### maven
-```xml
-<dependency>
-    <groupId>com.github.changvvb</groupId>
-    <artifactId>jackson-module-caseclass_2.12</artifactId>
-    <version>0.0.1</version>
-</dependency>
+libraryDependencies += "com.github.changvvb" %% "jackson-module-caseclass" % "0.0.2-SNAPSHOT"
 ```
 
 ## Usage

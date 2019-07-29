@@ -6,15 +6,17 @@ import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.fasterxml.jackson.module.caseclass.mapper.CaseClassObjectMapper
 import org.scalatest.FunSuite
 
-case class CaseClassField(@JsonDeserialize(using = classOf[TestDeserializer]) intValue:Int)
+case class CaseClassField(intValue:Int)
 
 @CaseClassDeserialize()
 case class TestCaseClass(
                           intValue:Int,
                           stringValue:String,
                           optionValue:Option[_] = None,
-                          seqValue:Seq[_] = Nil,
-                          @JsonDeserialize(using = classOf[CaseClassFieldDeserializer]) caseClassValue:CaseClassField  = null)
+                          seqValue:Seq[_] = Nil)
+
+@CaseClassDeserialize
+case class Test(x:Int,y:String = "sss",z:Seq[Int])
 
 class CaseClassDeserializerTest extends FunSuite {
 
@@ -27,8 +29,7 @@ class CaseClassDeserializerTest extends FunSuite {
       | "intValue": 3,
       | "stringValue": "test",
       | "optionValue": "something",
-      | "seqValue": [1, 2, 3],
-      | "caseClassValue": "anything"
+      | "seqValue": [1, 2, 3]
       |}
     """.stripMargin
 
@@ -38,7 +39,6 @@ class CaseClassDeserializerTest extends FunSuite {
     assert(obj.stringValue == "test")
     assert(obj.optionValue.contains("something"))
     assert(obj.seqValue == Seq(1,2,3))
-    assert(obj.caseClassValue.intValue == 333)
   }
 
   test("default") {
@@ -48,7 +48,16 @@ class CaseClassDeserializerTest extends FunSuite {
     assert(obj.stringValue == null)
     assert(obj.optionValue.isEmpty)
     assert(obj.seqValue.isEmpty)
-    assert(obj.caseClassValue == null)
+  }
+
+  test("other") {
+    val json =
+      """
+        |{
+        | "x": 89
+        |}
+      """.stripMargin
+    mapper.readValue[Test](json)
   }
 }
 
