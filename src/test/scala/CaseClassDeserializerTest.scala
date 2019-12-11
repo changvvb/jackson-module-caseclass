@@ -8,12 +8,12 @@ import deser.CaseClassDeserializer
 import mapper.CaseClassObjectMapper
 import org.scalatest.FunSuite
 
+@CaseClassDeserialize()
 case class CaseClass1(@JsonDeserialize(using = classOf[TestDeserializer]) intValue:Int)
 
 class MyDeserializer extends CaseClassDeserializer[TestCaseClass]
 
 
-//@JsonDeserialize(using = classOf[MyDeserializer])
 @CaseClassDeserialize()
 case class TestCaseClass(
                           intValue:Int,
@@ -45,16 +45,16 @@ class CaseClassDeserializerTest extends FunSuite {
     assert(obj.caseClassValue.intValue == 333)
   }
 
-//  test("default") {
-//    val json =
-//      """
-//        |{
-//        | "intValue": 3
-//        |}
-//      """.stripMargin
-//    val obj = mapper.readValue(json,classOf[CaseClass1])
-//    assert(obj.intValue == 3)
-//  }
+  test("default") {
+    val json =
+      """
+        |{
+        | "intValue": 3
+        |}
+      """.stripMargin
+    val obj = mapper.readValue(json,classOf[CaseClass1])
+    assert(obj.intValue == 9999)
+  }
 
 }
 
