@@ -1,52 +1,67 @@
 package com.fasterxml.jackson.module.caseclass.deser
 
-import com.fasterxml.jackson.core.{JsonParser, JsonProcessingException}
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.{BeanDescription, BeanProperty, DeserializationContext, JavaType, JsonDeserializer, ObjectMapper}
+import java.util.Objects
+
+import com.fasterxml.jackson.core.{ JsonParser, JsonProcessingException }
+import com.fasterxml.jackson.databind.`type`.TypeFactory
+import com.fasterxml.jackson.databind.{ BeanDescription, DeserializationContext, JsonNode, ObjectMapper }
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition
+import com.fasterxml.jackson.databind.node.{ NullNode, ObjectNode }
 import com.fasterxml.jackson.module.caseclass.mapper.CaseClassObjectMapper
 
 import scala.reflect.runtime.universe._
 
 class CaseClassDeserializer[T: Manifest]() extends StdDeserializer[T](manifest[T].runtimeClass) {
 
-  private val constructor = handledType.getConstructors.head
+  private[this] val constructor = handledType.getConstructors.head
 
-  private val methods = handledType.getMethods
+  private[this] val methods = handledType.getMethods
 
-  private val fields = typeOf[T].members.filter(!_.isMethod).toArray.reverse
+  private[this] val fieldsWithIndex = typeOf[T].members.filter(!_.isMethod).toArray.reverse.zipWithIndex
 
-  private val fieldsWithIndex = fields.zipWithIndex
+  private[this] val numberTypes = Seq(typeOf[Int], typeOf[Long], typeOf[Char], typeOf[Short], typeOf[Byte], typeOf[Float], typeOf[Double])
 
-  private val numberTypes = Seq(typeOf[Int], typeOf[Long], typeOf[Char], typeOf[Short], typeOf[Byte], typeOf[Float], typeOf[Double])
-
-  private def zeroValue(tpe: Type) = {  
+  private[this] def zeroValue(tpe: Type) = {
     tpe match {
-      case t if numberTypes.contains(t)            ⇒ 0.asInstanceOf[AnyRef]
-      case t if t =:= typeOf[Boolean]              ⇒ Boolean.box(false)
-      case t if t <:< typeOf[Option[_]]            ⇒ None
-      case t if t <:< typeOf[collection.Map[_, _]] ⇒ collection.Map.empty
-      case t if t <:< typeOf[Iterable[_]]          ⇒ Nil
-      case _                                       ⇒ null
+      case t: Type if t =:= typeOf[Boolean] ⇒ Boolean.box(false)
+      case t: Type if t <:< typeOf[Option[_]] ⇒ None
+      case t: Type if t <:< typeOf[collection.Map[_, _]] ⇒ collection.Map.empty
+      case t: Type if t <:< typeOf[Iterable[_]] ⇒ Nil
+      case t: Type if numberTypes.contains(t) ⇒ 0.asInstanceOf[AnyRef]
+      case _: Type ⇒ None.orNull
     }
   }
+
+  private[this] val valueType = TypeFactory.defaultInstance().constructType(handledType())
 
   @throws[JsonProcessingException]
   def deserialize(jp: JsonParser, ctxt: DeserializationContext): T = {
 
-    val node: ObjectNode = jp.getCodec.readTree(jp)
+    val node = jp.getCodec.readTree[ObjectNode](jp)
     val mapper = jp.getCodec.asInstanceOf[ObjectMapper with CaseClassObjectMapper]
+    val beanDesc = ctxt.getConfig.introspect[BeanDescription](valueType)
+
     val params = fieldsWithIndex.map {
       case (field, index) ⇒
         val fieldName = field.name.toString.trim
-        if (node.hasNonNull(fieldName)) {
-          val javaType = mapper.constructType(field.typeSignature)
-          val subJsonParser = mapper.treeAsTokens(node.get(fieldName))
-            mapper.readValue(subJsonParser, javaType).asInstanceOf[AnyRef]
+        val beanPropertyDefinition: BeanPropertyDefinition = beanDesc.findProperties().get(index)
+        val subNodeOpt = Option(node.get(fieldName))
+        val originJavaType = mapper.constructType(field.typeSignature)
+        val javaType = ctxt.getAnnotationIntrospector.refineDeserializationType(ctxt.getConfig, beanPropertyDefinition.getPrimaryMember, originJavaType)
+        val deserializeClass = ctxt.getAnnotationIntrospector.findDeserializer(beanPropertyDefinition.getPrimaryMember)
+
+        if (Objects.nonNull(deserializeClass)) {
+          val deserializer = ctxt.deserializerInstance(beanPropertyDefinition.getField, deserializeClass)
+          val subNode = subNodeOpt getOrElse NullNode.getInstance()
+          deserializer.deserialize(mapper.treeAsTokens(subNode), ctxt)
         } else {
-          val methodName = "$lessinit$greater$default$" + (index + 1)
-          methods.find(_.getName == methodName).fold(zeroValue(field.typeSignature))(_.invoke(null))
+          subNodeOpt.fold {
+            val methodName = "$lessinit$greater$default$" + (index + 1)
+            methods.find(_.getName == methodName).fold(zeroValue(field.typeSignature))(_.invoke(None.orNull))
+          } { subNode =>
+            mapper.readValue(mapper.treeAsTokens(subNode), javaType).asInstanceOf[AnyRef]
+          }
         }
     }
 
@@ -56,9 +71,9 @@ class CaseClassDeserializer[T: Manifest]() extends StdDeserializer[T](manifest[T
 
 object CaseClassDeserializer {
 
-  def apply[AnyRef](clazz: Class[_]): CaseClassDeserializer[AnyRef] = {
-      implicit val manifest = Manifest.classType[AnyRef](clazz)
-      new CaseClassDeserializer[AnyRef]
+  def apply[T](clazz: Class[T]): CaseClassDeserializer[T] = {
+    implicit val manifest = Manifest.classType[T](clazz)
+    new CaseClassDeserializer[T]
   }
 }
 

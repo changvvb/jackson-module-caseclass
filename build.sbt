@@ -1,6 +1,6 @@
 name := "jackson-module-caseclass"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.12.10"
 
 val jacksonVersion = "2.9.8"
 

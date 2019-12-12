@@ -9,11 +9,16 @@ import org.scalatest.FunSuite
 case class CaseClassField(intValue:Int)
 
 @CaseClassDeserialize()
+case class CaseClass1(@JsonDeserialize(using = classOf[TestDeserializer]) intValue:Int)
+
+
+@CaseClassDeserialize()
 case class TestCaseClass(
                           intValue:Int,
                           stringValue:String,
                           optionValue:Option[_] = None,
-                          seqValue:Seq[_] = Nil)
+                          seqValue:Seq[_] = Nil,
+                          @JsonDeserialize(using = classOf[TestDeserializer2]) caseClassValue:CaseClass1  = None.orNull)
 
 @CaseClassDeserialize
 case class Test(x:Int,y:String = "sss",z:Seq[Int])
@@ -39,6 +44,7 @@ class CaseClassDeserializerTest extends FunSuite {
     assert(obj.stringValue == "test")
     assert(obj.optionValue.contains("something"))
     assert(obj.seqValue == Seq(1,2,3))
+    assert(obj.caseClassValue.intValue == TestDeserializer2.value)
   }
 
   test("default") {
@@ -57,7 +63,21 @@ class CaseClassDeserializerTest extends FunSuite {
         | "x": 89
         |}
       """.stripMargin
-    mapper.readValue[Test](json)
+    val obj = mapper.readValue[Test](json)
+    assert(obj.x == 89)
+    assert(obj.y == "sss")
+    assert(obj.z == Nil)
+  }
+
+  test("annotation") {
+    val json =
+      """
+        |{
+        | "intValue": 2
+        |}
+      """.stripMargin
+    val obj = mapper.readValue[CaseClass1](json)
+    assert(obj.intValue == TestDeserializer.value)
   }
 }
 
