@@ -112,7 +112,7 @@ val json =
 mapper.readValue[TestCaseClass](json)
 ```
 
-### Enable all case class
+### 4. Enable all case class
 ```scala
 import com.fasterxml.jackson.module.caseclass.deser.CaseClassDeserializer
 import com.fasterxml.jackson.databind.ObjectMapper
