@@ -12,6 +12,10 @@ import scala.reflect.runtime.universe._
 trait CaseClassObjectMapper extends ObjectMapper {
   self: ObjectMapper ⇒
 
+  private[this] var _allCaseClassEnabled = false
+
+  def setAllCaseClassEnabled(enabled: Boolean): Unit = _allCaseClassEnabled = enabled
+
   this.registerModule(DefaultScalaModule)
 
   def constructType(tpe: Type): JavaType = {
@@ -62,7 +66,11 @@ trait CaseClassObjectMapper extends ObjectMapper {
   }
 
   private[this] def useCaseClassDeserializer(valueType: JavaType) = {
-    valueType.getRawClass.getAnnotation(classOf[CaseClassDeserialize]) != null
+    if (_allCaseClassEnabled) {
+      runtimeMirror(getClass.getClassLoader).classSymbol(valueType.getRawClass).isCaseClass
+    } else {
+      valueType.getRawClass.getAnnotation(classOf[CaseClassDeserialize]) != null
+    }
   }
 
   private[this] val _caseClassDeserializers = mutable.Map[JavaType, JsonDeserializer[AnyRef]]()

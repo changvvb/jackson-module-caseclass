@@ -20,3 +20,5 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.6-SNAP3" % "test",
   "junit" % "junit" % "4.12" % "test"
 )
+
+Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
