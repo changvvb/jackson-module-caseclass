@@ -15,10 +15,10 @@ import scala.reflect.runtime.universe._
 
 class CaseClassDeserializer[T: Manifest]() extends StdDeserializer[T](manifest[T].runtimeClass) {
 
-  private[this] val constructor = getRuntimeMirror.reflectClass(getScalaType.typeSymbol.asClass)
+  private[this] lazy val constructor = getRuntimeMirror.reflectClass(getScalaType.typeSymbol.asClass)
     .reflectConstructor(getScalaType.members.find(_.isConstructor).get.asMethod)
 
-  private[this] val defaultValueMethodMirrors = {
+  private[this] lazy val defaultValueMethodMirrors = {
     val companionInstance = getRuntimeMirror.reflectModule(getScalaType.typeSymbol.companion.asModule).instance
     val defaultValueMethods = getScalaType.companion.members.filter(_.isMethod)
       .filter(_.name.toString.startsWith(CaseClassDeserializer.defaultMethodPrefix)).map(_.asMethod)
@@ -28,8 +28,6 @@ class CaseClassDeserializer[T: Manifest]() extends StdDeserializer[T](manifest[T
         getRuntimeMirror.reflect(companionInstance).reflectMethod(method)
     }.toMap
   }
-
-  private[this] val fieldsWithIndex = typeOf[T].members.filter(!_.isMethod).toArray.reverse.zipWithIndex
 
   private[this] def zeroValue(tpe: Type) = {
     tpe match {
@@ -42,7 +40,7 @@ class CaseClassDeserializer[T: Manifest]() extends StdDeserializer[T](manifest[T
     }
   }
 
-  private[this] val valueType = TypeFactory.defaultInstance().constructType(handledType())
+  private[this] lazy val valueType = TypeFactory.defaultInstance().constructType(handledType())
 
   private[this] def getRuntimeMirror = runtimeMirror(getClass.getClassLoader)
 
@@ -50,16 +48,18 @@ class CaseClassDeserializer[T: Manifest]() extends StdDeserializer[T](manifest[T
 
   @throws[JsonProcessingException]
   def deserialize(jp: JsonParser, ctxt: DeserializationContext): T = {
+    if (!getScalaType.typeSymbol.asClass.isStatic) {
+      throw MismatchedInputException.from(jp, handledType(), s"can only instantiate non-static inner class by using ${getClass.getName}")
+    }
 
     val node = jp.getCodec.readTree[ObjectNode](jp)
     val mapper = jp.getCodec.asInstanceOf[ObjectMapper with CaseClassObjectMapper]
     val beanDesc = ctxt.getConfig.introspect[BeanDescription](valueType)
 
-    val params = fieldsWithIndex.map {
+    val params = constructor.symbol.paramLists.head.zipWithIndex.map {
       case (field, index) ⇒
-        val fieldName = field.name.toString.trim
         val beanPropertyDefinition: BeanPropertyDefinition = beanDesc.findProperties().get(index)
-        val subNodeOpt = Option(node.get(fieldName))
+        val subNodeOpt = Option(node.get(field.name.toString))
         val originJavaType = mapper.constructType(field.typeSignature)
         val javaType = ctxt.getAnnotationIntrospector.refineDeserializationType(ctxt.getConfig, beanPropertyDefinition.getPrimaryMember, originJavaType)
         val deserializeClass = ctxt.getAnnotationIntrospector.findDeserializer(beanPropertyDefinition.getPrimaryMember)
@@ -77,11 +77,7 @@ class CaseClassDeserializer[T: Manifest]() extends StdDeserializer[T](manifest[T
         }
     }
 
-    if (constructor.symbol.paramLists.head.size != params.length) {
-      throw MismatchedInputException.from(jp, handledType(), s"can only instantiate non-static inner class by using ${getClass.getName}")
-    } else {
-      constructor.apply(params: _*).asInstanceOf[T]
-    }
+    constructor.apply(params: _*).asInstanceOf[T]
   }
 }
 

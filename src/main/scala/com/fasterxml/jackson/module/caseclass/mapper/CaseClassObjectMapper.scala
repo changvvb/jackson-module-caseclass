@@ -48,7 +48,7 @@ trait CaseClassObjectMapper extends ObjectMapper {
     }
   }
 
-  def registerCaseClassDeserializer[T: Manifest](): ObjectMapper = {
+  def registerCaseClassDeserializer[T: Manifest]: ObjectMapper = {
     val module = new SimpleModule
     module.addDeserializer(manifest[T].runtimeClass.asInstanceOf[Class[T]], new CaseClassDeserializer[T])
     this.registerModule(module)

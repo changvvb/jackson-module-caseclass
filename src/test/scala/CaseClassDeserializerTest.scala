@@ -2,14 +2,16 @@ import CaseClassDeserializerTest.StaticInnerClass
 import com.fasterxml.jackson.module.caseclass.annotation.CaseClassDeserialize
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.fasterxml.jackson.module.caseclass.mapper.CaseClassObjectMapper
 import org.scalatest.FunSuite
 
 case class CaseClassField(intValue: Int)
 
-case class TestClassWithDefault(intValue: Int, seqValue: Seq[String] = Nil)
+case class TestClassWithDefault(intValue: Int, seqValue: Seq[String] = Nil) {
+  val inBodyValue = ""
+}
 
 @CaseClassDeserialize()
 case class CaseClass1(@JsonDeserialize(using = classOf[TestDeserializer]) intValue: Int)
@@ -106,6 +108,20 @@ class CaseClassDeserializerTest extends FunSuite {
     mapper2.setAllCaseClassEnabled(true)
     val obj2 = mapper2.readValue[TestClassWithDefault](json)
     assert(obj2.seqValue == Nil)
+  }
+
+  case class NoneStaticInnerClass(intValue:Int)
+  test("inner class should deserialize failed") {
+    assertThrows[MismatchedInputException] {
+      val json =
+        """
+          |{
+          | "intValue": 2
+          |}
+      """.stripMargin
+      mapper.registerCaseClassDeserializer[NoneStaticInnerClass]
+      mapper.readValue[NoneStaticInnerClass](json)
+    }
   }
 }
 
