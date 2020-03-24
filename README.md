@@ -18,7 +18,7 @@ For some scala type, if jackson-module-caseclass doesn't know what a field value
 
 ### sbt
 ```scala
-libraryDependencies += "com.github.changvvb" %% "jackson-module-caseclass" % "1.1.0"
+libraryDependencies += "com.github.changvvb" %% "jackson-module-caseclass" % "1.1.1"
 ```
 
 ## Usage
