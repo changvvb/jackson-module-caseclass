@@ -1,5 +1,7 @@
 # jackson-module-caseclass
 
+![Scala CI](https://github.com/changvvb/jackson-module-caseclass/workflows/Scala%20CI/badge.svg)
+
 ## Features
 - If one field present in json, just deserialize it.
 - If one field not present in json, but the case class has default value, deserialize it as the case class default value.
